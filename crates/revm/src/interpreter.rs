@@ -11,7 +11,7 @@ pub use stack::Stack;
 
 use crate::{
     instructions::{eval, Return},
-    Gas, Host, Spec, USE_GAS, OpCode, opcode,
+    Gas, Host, Spec, USE_GAS, OpCode,
 };
 use bytes::Bytes;
 use core::ops::Range;
@@ -119,28 +119,10 @@ impl Interpreter {
         }
     }
 
-    /// Analyse bytecode
-    pub fn analyse(&mut self) {
-        for i in 0..self.contract.bytecode.bytecode().len() - 4 {
-            let bytecode = self.contract.bytecode.bytecode();
-            let opcode = bytecode[i];
-            let target0 = bytecode[i + 1];
-            let target1 = bytecode[i + 2];
-            let target = ((target0 as usize) << 8) + target1 as usize;
-            let next = bytecode[i + 3];
-            if opcode == opcode::PUSH2 && next == opcode::JUMPI {
-                if self.contract.is_valid_jump(target) {
-                    // dbg!((i, target));
-                    self.contract.bytecode.bytecode_mut()[i] = opcode::PUSH2_JUMPI;
-                }
-            }
-        }
-    }
+
 
     /// loop steps until we are finished with execution
     pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> Return {
-
-        self.analyse();
 
         //let timer = std::time::Instant::now();
         let mut ret = Return::Continue;

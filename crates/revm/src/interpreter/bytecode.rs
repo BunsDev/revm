@@ -156,6 +156,7 @@ impl Bytecode {
         }
     }
 
+
     pub fn to_analysed<SPEC: Spec>(self) -> Self {
         let hash = self.hash;
         let (bytecode, len) = match self.state {
@@ -168,9 +169,23 @@ impl Bytecode {
             _ => return self,
         };
         let jumptable = Self::analyze::<SPEC>(bytecode.as_ref());
+        let mut bytecode = bytecode.to_vec();
+        for i in 0..bytecode.len() - 4 {
+            let opcode = bytecode[i];
+            let target0 = bytecode[i + 1];
+            let target1 = bytecode[i + 2];
+            let target = ((target0 as usize) << 8) + target1 as usize;
+            let next = bytecode[i + 3];
+            if opcode == opcode::PUSH2 && next == opcode::JUMPI {
+                if jumptable.is_valid(target) {
+                    // dbg!((i, target));
+                    bytecode[i] = opcode::PUSH2_JUMPI;
+                }
+            }
+        }
 
         Self {
-            bytecode,
+            bytecode: bytecode.into(),
             hash,
             state: BytecodeState::Analysed { len, jumptable },
         }
